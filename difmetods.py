@@ -1,9 +1,17 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+#i в Ti и В Xi равняется степени
+#n - отрезок
+#m - окно
+#T - массив временных отрезков
+#X - массив значений функции
+#BorA = выбор режима работы функции просчёта 1 - оценка второй производной, 2 - оценка первой производной
+
+##############################################################################
+#Для аппроксимации параболой
 def Ti(i,n,m2,T): return sum([T[j]**i for j in range(n - m2, n + m2+1)])
 def Xi(i,n,m2,T,X): return sum([X[j]*(T[j]**i) for j in range(n - m2, n + m2+1)])
-
 def BAn(n,om,m2,T,X,bora):
     TT = np.empty(5)
     XX = np.empty(5)
@@ -42,32 +50,6 @@ def BAn(n,om,m2,T,X,bora):
         bn = (B1/B2) + (an*(B3/B4))
 
         return (2 * an * T[n] + bn)
-
-    
-sins = []
-cos = []
-T1 = []
-m1 = 5
-m21 = int((m1-1)/2)
-msins = []
-for i in np.arange(-5,5,0.01):
-    sins.append(np.sin(i))
-    cos.append(np.cos(i))
-    msins.append(-np.sin(i))
-    T1.append(i)
-
-
-def lindif(X,T,m):
-    m2 = int((m-1)/2)
-    k = []
-    dt = T[1]-T[0]
-    suma = 0
-    z = (2 * dt) * sum(i ** 2 for i in [Mi for Mi in range(1, m2 +1)])
-    x1 = 0
-    for n in range(m2,len(X)-m2):
-        M = [i for i in range(-m2, m2+1 )]
-        k.append ((1/z) * sum([X[i+n]*i for i in M]))
-    return (k)  
 def parabdif2(X,T,m,bora):
     m2 = int((m-1)/2)
     om = 1/m
@@ -76,17 +58,31 @@ def parabdif2(X,T,m,bora):
     for n in range(m2,L-m2):
         result.append(BAn(n,om,m2,T,X,bora))
     return result
+##############################################################################
+#Аппроксимация линейной функцией
+def lindif(X,T,m):
+    m2 = int((m-1)/2)
+    k = []
+    dt = T[1]-T[0]
+    z = (2 * dt) * sum(i ** 2 for i in [Mi for Mi in range(1, m2 +1)])
+    for n in range(m2,len(X)-m2):
+        M = [i for i in range(-m2, m2+1 )]
+        k.append ((1/z) * sum([X[i+n]*i for i in M]))
+    return (k)  
+###############################################################################
+if __name__ == "__main__":
+    print('huy')
 
-
-dsin = lindif(sins,T1,m1)
-dsin2 = parabdif2(sins,T1,m1,1)
-
-
-d2sin = parabdif2(sins,T1,m1,1)
-d2sin1 = lindif(dsin,T1,m1)
-d2sin2 = parabdif2(dsin,T1[2:len(T1)-2],m1,2)
-
-
-
+    sins = []
+    cos = []
+    T1 = []
+    m1 = 5
+    m21 = int((m1-1)/2)
+    msins = []
+    for i in np.arange(-5,5,0.01):
+        sins.append(np.sin(i))
+        cos.append(np.cos(i))
+        msins.append(-np.sin(i))
+        T1.append(i)
 
 
