@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 #m - окно
 #T - массив временных отрезков
 #X - массив значений функции
-#BorA = выбор режима работы функции просчёта 1 - оценка второй производной, 2 - оценка первой производной
+#BorA = выбор режима работы функции просчёта производной с помощью параболы:
+#  1 - оценка второй производной, 2 - оценка первой производной
 
 ##############################################################################
 #Для аппроксимации параболой
@@ -32,22 +33,23 @@ def BAn(n,om,m2,T,X,bora):
         return ((K1 - (K2 * (K3 / K4))) / (K5 + (K6 * (K7 / K8))))*2
     #просчёт A и B
     else:
-        K1 = XX[2] - om * TT[2] * XX[0]
-        K2 = TT[3] - om * TT[2] * TT[1]
-        K3 = XX[1] - om * XX[0] * TT[1]
-        K4 = TT[2] - om * (TT[1] ** 2)
-        K5 = TT[4] - om * (TT[2] ** 2)
-        K6 = TT[3] - om * TT[2] * TT[1]
-        K7 = om * TT[2] * TT[1] - TT[3]
-        K8 = TT[2] - (om * (TT[1] ** 2))
+        #расчёт коэффициента A
+        A1 = XX[2] - om * TT[2] * XX[0]
+        A2 = TT[3] - om * TT[2] * TT[1]
+        A3 = XX[1] - om * XX[0] * TT[1]
+        A4 = TT[2] - om * (TT[1] ** 2)
+        A5 = TT[4] - om * (TT[2] ** 2)
+        A6 = TT[3] - om * TT[2] * TT[1]
+        A7 = om * TT[2] * TT[1] - TT[3]
+        A8 = TT[2] - (om * (TT[1] ** 2))
 
-        an = ((K1 - (K2 * (K3 / K4))) / (K5 + (K6 * (K7 / K8))))
-
-        B1 = XX[1] - om*XX[0]*TT[1]
-        B2 = TT[2] - om* (TT[1]**2)
-        B3 = om*TT[2]*TT[1]-TT[3]
-        B4 = TT[2] - om*(TT[1]**2)
-        bn = (B1/B2) + (an*(B3/B4))
+        an = ((A1 - (A2 * (A3 / A4))) / (A5 + (A6 * (A7 / A8))))
+        #Расчёт коэфициента B
+        B1 = XX[1] - om * XX[0] * TT[1]
+        B2 = TT[2] - om * (TT[1] ** 2 )
+        B3 = om * TT[2] * TT[1] - TT[3]
+        B4 = TT[2] - om * (TT[1] ** 2)
+        bn = (B1 / B2) + (an * (B3 / B4))
 
         return (2 * an * T[n] + bn)
 def parabdif2(X,T,m,bora):
@@ -71,18 +73,27 @@ def lindif(X,T,m):
     return (k)  
 ###############################################################################
 if __name__ == "__main__":
-    print('huy')
-
-    sins = []
-    cos = []
-    T1 = []
+    ################################################################
+    #генерирование данных
+    sins = [np.sin(i) for i in np.arange(-5,5,0.01)]
+    cos = [np.cos(i) for i in np.arange(-5,5,0.01)]
+    msins = [-np.sin(i) for i in np.arange(-5,5,0.01)]
+    T1 = [i for i in np.arange(-5,5,0.01)]
+    #################################################################
+    #Константы
     m1 = 5
     m21 = int((m1-1)/2)
-    msins = []
-    for i in np.arange(-5,5,0.01):
-        sins.append(np.sin(i))
-        cos.append(np.cos(i))
-        msins.append(-np.sin(i))
-        T1.append(i)
+    AorB = 1
+    ##################################################################
+
+    dsin = parabdif2(sins,T1,m1,2)
+    d2sin = parabdif2(sins,T1,m1,AorB)
+
+    plt.plot(T1[m21:len(T1)-m21], dsin,color = 'red')
+    plt.plot(T1,cos,"--",color = 'green')
+    plt.plot(T1,sins)
+    plt.plot(T1[m21:len(T1)-m21],d2sin,color = 'blue')
+    plt.plot(T1,msins,'--')
+    plt.show()
 
 
