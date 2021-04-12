@@ -1,6 +1,9 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+from tkinter.filedialog import askopenfilename
+from scipy import interpolate
 #i в Ti и В Xi равняется степени
 #n - отрезок
 #m - окно
@@ -75,25 +78,37 @@ def lindif(X,T,m):
 if __name__ == "__main__":
     ################################################################
     #генерирование данных
-    sins = [np.sin(i) for i in np.arange(-5,5,0.01)]
-    cos = [np.cos(i) for i in np.arange(-5,5,0.01)]
-    msins = [-np.sin(i) for i in np.arange(-5,5,0.01)]
-    T1 = [i for i in np.arange(-5,5,0.01)]
+    #sins = [np.sin(i) for i in np.arange(-5,5,0.01)]
+    #cos = [np.cos(i) for i in np.arange(-5,5,0.01)]
+    #msins = [-np.sin(i) for i in np.arange(-5,5,0.01)]
+    #T1 = [i for i in np.arange(-5,5,0.01)]
+    PATH = askopenfilename()
+
+    FILES = pd.read_excel(PATH, sheet_name="Отчет")
+
+    X = [float(FILES['Unnamed: 0'][i]) for i in range(10, len(FILES['Unnamed: 0']))]
+    Y = [float(FILES['Unnamed: 1'][i]) for i in range(10, len(FILES['Unnamed: 1']))]
     #################################################################
+    InX = np.linspace(min(X), max(X), 2000)                                 # Генерируем ряд, по которому произведём интерполяцию
+    Tck = interpolate.splrep(X, Y)                                         # Заготовка для интерполяции
+    InY = interpolate.splev(InX, Tck)                                      # Получаем интерполированные данные
     #Константы
     m1 = 5
-    m21 = int((m1-1)/2)
+    #m21 = int((m1-1)/2)
     AorB = 1
     ##################################################################
 
-    dsin = parabdif2(sins,T1,m1,2)
-    d2sin = parabdif2(sins,T1,m1,AorB)
+    dsin = parabdif2(InY,InX,m1,1)
+    d2sin = parabdif2(InY,InX,m1,2)
+    d22sin = parabdif2(d2sin,InX[2:len(InX)-2],m1,2)
 
-    plt.plot(T1[m21:len(T1)-m21], dsin,color = 'red')
-    plt.plot(T1,cos,"--",color = 'green')
-    plt.plot(T1,sins)
-    plt.plot(T1[m21:len(T1)-m21],d2sin,color = 'blue')
-    plt.plot(T1,msins,'--')
+    plt.plot(InX,InY)
+    plt.plot(InX[2:len(InX)-2], d2sin,color = 'red')
+    plt.plot(InX[4:len(InX)-4], d22sin)
+    #plt.plot(T1,cos,"--",color = 'green')
+    #plt.plot(T1,sins)
+    #plt.plot(T1[m21:len(T1)-m21],d2sin,color = 'blue')
+    #plt.plot(T1,msins,'--')
     plt.show()
 
 
