@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import random
 from math import log
+
+from numpy.core.shape_base import atleast_1d
 def Ex(X):
     return 1/X
 #Осцилятор уеды
@@ -21,17 +23,28 @@ def Yaxs(x,y,a):
 
 def Zaxs(x,z,b,r):
     return ( b+(x-r)*z)
+#Осцилятор Рёсслера 2
+def Xaxs1(y,z,Xs,X1s,k):
+    return (- y - z)- k*(X1s-Xs)
+
+def Yaxs1(x,y,a):
+    return ( x +a*y)
+
+def Zaxs1(x,z,b,r):
+    return ( b+(x-r)*z)
 
 #Генератор Кияшко-Пиковского-Рабиновича
 def Ff(z):
     return ( (8.592*z)-(22*z*z) + (14.408*(z*z*z)) )
+
 def Xax(x,y,z,u,g):
-    return 2*u*x + y - g*z
+    return (2*u*x + y - g*z) 
 
 def Yax(x):
     return -x
+
 def Zax(x,z):
-    b =(x - Ff(z) ) / 0.2
+    b = ((x - Ff(z) ) / 0.2 ) 
     return b
 
 
@@ -163,9 +176,88 @@ def R_K_GKPR(Xas,Yas,Zas,N,h,u,g):
         Z[i+1] =  Z[i]+(h/6)*(K1Z+(2*K2Z)+(2*K3Z)+K4Z)
     return X,Y,Z
 
+
+#Решение связанных систем
+def eiler_sys(N,h, a, a1,r,r1,k,t,b=0.2,b1=0.2):
+
+    X,Y,Z,X1,Y1,Z1 = np.empty(N+1), np.empty(N+1),np.empty(N+1),np.empty(N+1), np.empty(N+1),np.empty(N+1)
+    for i in range(t):
+        X[i] = np.random.rand()
+        Y[i] = np.random.rand()
+        Z[i] = np.random.rand()
+        X1[i] = np.random.rand()
+        Y1[i] = np.random.rand()
+        Z1[i] = np.random.rand()
+
+    for i in range(t,N):
+        X[i+1] = X[i]+ h * ( -Y[i] - Z[i] )
+        Y[i+1] = Y[i]+ h* ( X[i] + a * Y[i] )
+        Z[i+1] = Z[i] + h * (  b + (X[i] - r)*Z[i] )
+
+        X1[i+1] = X1[i] + h * ( ( -Y1[i] - Z1[i] ) - (X[i-t]*k ) )
+        Y1[i+1] = Y1[i]+ h * ( X1[i] + a1 * Y1[i] )
+        Z1[i+1] = Z1[i] + h * (  b1 + (X1[i] - r1)*Z1[i] )
+    
+    return X,Y,Z,X1,Y1,Z1
+
+def RK_sys(Xas,Yas,Zas,Xas1,Yas1,Zas1,N,h,a,a1,r,r1,k,t,b=0.2,b1=0.2):
+
+    X,Y,Z,X1,Y1,Z1= np.empty(N+1), np.empty(N+1),np.empty(N+1) ,np.empty(N+1), np.empty(N+1),np.empty(N+1)
+    for i in range(t):
+        X[i] = np.random.rand()
+        Y[i] = np.random.rand()
+        Z[i] = np.random.rand()
+        X1[i] =np.random.rand()
+        Y1[i] =np.random.rand()
+        Z1[i] =np.random.rand()
+
+    for i in range(t,N):
+        K1X = Xas(Y[i],Z[i])
+        K1Y = Yas(X[i],Y[i],a)
+        K1Z = Zas(X[i],Z[i],b,r)
+
+        K2X = Xas(Y[i]+(h/2)*K1Y,Z[i]+(h/2)*K1Z)
+        K2Y = Yas(X[i]+(h/2)*K1X,Y[i]+(h/2)*K1Y,a)
+        K2Z = Zas(X[i]+(h/2)*K1X,Z[i]+(h/2)*K1Z,b,r)
+
+        K3X = Xas(Y[i]+(h/2)*K2Y,Z[i]+(h/2)*K2Z)
+        K3Y = Yas(X[i]+(h/2)*K2X,Y[i]+(h/2)*K2Y,a)
+        K3Z = Zas(X[i]+(h/2)*K2X,Z[i]+(h/2)*K2Z,b,r)
+
+        K4X = Xas(Y[i]+(h/2)*K3Y,Z[i]+(h/2)*K3Z)
+        K4Y = Yas(X[i]+(h/2)*K3X,Y[i]+(h/2)*K3Y,a)
+        K4Z = Zas(X[i]+(h/2)*K3X,Z[i]+(h/2)*K3Z,b,r)
+
+        X[i+1] = X[i]+(h/6)*(K1X+(2*K2X)+(2*K3X)+K4X)
+        Y[i+1] = Y[i]+(h/6)*(K1Y+(2*K2Y)+(2*K3Y)+K4Y)
+        Z[i+1] = Z[i]+(h/6)*(K1Z+(2*K2Z)+(2*K3Z)+K4Z)
+
+        K1X1 = Xas1( Y1[i], Z1[i], X[i-t], X1[i] , k)
+        K1Y1 = Yas1( X1[i] , Y1[i], a1)
+        K1Z1 = Zas1( X1[i] , Z1[i], b1 , r1)
+
+        K2X1 = Xas1( Y1[i]+(h/2) * K1Y1 , Z1[i] + (h/2)*K1Z1 , X[i-t]+(h/2) * K1X, X1[i]+(h/2) * K1X1 , k)
+        K2Y1 = Yas1( X1[i]+(h/2) * K1X1,Y1[i] + (h/2) * K1Y1, a1)
+        K2Z1 = Zas1( X1[i]+(h/2) * K1X1,Z1[i] + (h/2) * K1Z1, b1 , r1)
+
+        K3X1 = Xas1( Y1[i]+(h/2)  * K2Y1,Z1[i] + (h/2)*K2Z1 , X[i-t]+(h/2) * K2X,X1[i]+(h/2) * K2X1 , k)
+        K3Y1 = Yas1(X1[i]+(h/2)*K2X1,Y1[i]+(h/2)*K2Y1,a1)
+        K3Z1 = Zas1(X1[i]+(h/2)*K2X1,Z1[i]+(h/2)*K2Z1,b1,r1) 
+
+        K4X1 = Xas1( Y1[i]+(h/2)*K3Y1 , Z1[i]+(h/2)*K3Z1 , X[i-t]+(h/2)*K3X ,X1[i]+(h/2) * K3X1 , k )
+        K4Y1 = Yas1( X1[i]+(h/2)*K3X1 , Y1[i]+(h/2)*K3Y1 , a1 )
+        K4Z1 = Zas1( X1[i]+(h/2)*K3X1 , Z1[i]+(h/2)*K3Z1, b1, r1)
+        
+        X1[i+1] = X1[i]+(h/6)*(K1X1+(2*K2X1)+(2*K3X1)+K4X1)
+        Y1[i+1] = Y1[i]+(h/6)*(K1Y1+(2*K2Y1)+(2*K3Y1)+K4Y1)
+        Z1[i+1] = Z1[i]+(h/6)*(K1Z1+(2*K2Z1)+(2*K3Z1)+K4Z1)
+        
+        
+
+    return X,Y,Z, X1,Y1,Z1
 #Обратный метод Эйлера для систем
 
-def O_eiler_for_Ueda(F,G,E,N,A,w,h):
+#def O_eiler_for_Ueda(F,G,E,N,A,w,h):
     X,Y = np.empty(N+1), np.empty(N+1)
     X[0] = np.random.rand()
     Y[0] = np.random.rand()
@@ -189,8 +281,8 @@ def O_eiler_for_Ueda(F,G,E,N,A,w,h):
         Y[i+1] = ny
     
     return X,Y
-
-def O_eiler_for_ressler(E,N,h,a,r,b=0.2):
+#
+#def O_eiler_for_ressler(E,N,h,a,r,b=0.2):
     X,Y,Z = np.empty(N+1), np.empty(N+1),np.empty(N+1)
     X[0] = np.random.rand()
     Y[0] = np.random.rand()
@@ -221,8 +313,8 @@ def O_eiler_for_ressler(E,N,h,a,r,b=0.2):
         Y[i+1] = ny
         Z[i+1] = nz
     return X,Y,Z
-
-def O_eiler_for_GKPR(Xx,Yy,Zz,E,N,h,u,g):
+#
+#def O_eiler_for_GKPR(Xx,Yy,Zz,E,N,h,u,g):
     X,Y,Z = np.empty(N+1), np.empty(N+1),np.empty(N+1)
     X[0] = np.random.rand()
     Y[0] = np.random.rand()
@@ -272,38 +364,77 @@ def O_eiler_for_GKPR(Xx,Yy,Zz,E,N,h,u,g):
         X[i+1] = X[i]+h*F(X[i])
 
     return X
-
+#
 
 
 
 
 
 #Общие параметры
-h  = 0.001 #шаг
-E  = 0.000001 # погрешность для обратного метода
-N = 100000 #число точек
 
-#Решение систем Рёсслера
-#параметры
-a = 0.2
-r = 4
-#D,B,K =  eiler_Ressler(N,h,a,r)
+
+
+
+
+
+
+
+
+
+
 #D,B,K = Runge_kutte_for_ressler(Xaxs,Yaxs,Zaxs,N,h,a,r)
 #D,B,K = O_eiler_for_ressler(E, N, h,a,r)
 
 #Решение генератора
 #Параметры
-u = 0.15
-g = 0.93
+#u = 0.14
+#g = 0.9
 #D,B,K = eiler_GKPR(Xax,Yax,Zax,N,h,u,g)
-#D,B,K = R_K_GKPR(Xax,Yax,Zax,N,h,u,g)
+#D1,B1,K1 = R_K_GKPR(Xax,Yax,Zax,N,h,u,g)
 #D,B,K = O_eiler_for_GKPR(Xax,Yax,Zax,E,N,h,u,g)
 
-#График для трёхмерных систем
-#Fig = plt.figure()
-#Ax = Fig.add_subplot(111, projection='3d')
-#Ax.plot(D[1000:],B[1000:],K[1000:])
+h  = 0.001 #шаг
+N = 100000 #число точек
 
+#1 система
+a =  0.32
+r =  4.9
+#2 система
+a1 = 0.2
+r1 = 2
+#D,B,K =  eiler_Ressler(N,h,a,r)
+#D,B,K,D1,B1,K1 = eiler_sys(N,h,a,a1,r,r1,k)
+D1,B1,K1,D11,B11,K11 = eiler_sys(N,h,a,a1,r,r1,0.2,0)
+D12,B12,K12,D112,B112,K112 = eiler_sys(N,h,a,a1,r,r1,0.2,200)
+D13,B13,K13,D113,B113,K113 = eiler_sys(N,h,a,a1,r,r1,0.2,300)
+D14,B14,K14,D114,B114,K114 = eiler_sys(N,h,a,a1,r,r1,0.2,400)
+D15,B15,K15,D115,B115,K115 = eiler_sys(N,h,a,a1,r,r1,0.2,900)
+
+#D1,B1,K1,D11,B11,K11 = RK_sys(Xaxs,Yaxs,Zaxs,Xaxs1,Yaxs1,Zaxs1,N,h,a,a1,r,r1,1,0)
+#
+#D12,B12,K12,D112,B112,K112 = RK_sys(Xaxs,Yaxs,Zaxs,Xaxs1,Yaxs1,Zaxs1,N,h,a,a1,r,r1,1,100)
+#
+#D13,B13,K13,D113,B113,K113 = RK_sys(Xaxs,Yaxs,Zaxs,Xaxs1,Yaxs1,Zaxs1,N,h,a,a1,r,r1,1,200)
+#
+#D14,B14,K14,D114,B114,K114 = RK_sys(Xaxs,Yaxs,Zaxs,Xaxs1,Yaxs1,Zaxs1,N,h,a,a1,r,r1,1,300)
+#
+#D15,B15,K15,D115,B115,K115 = RK_sys(Xaxs,Yaxs,Zaxs,Xaxs1,Yaxs1,Zaxs1,N,h,a,a1,r,r1,1,1000)
+#График для трёхмерных систем
+Fig = plt.figure()
+Ax = Fig.add_subplot(251, projection='3d')
+Az = Fig.add_subplot(256, projection='3d')
+Az1 = Fig.add_subplot(257, projection='3d')
+Az2 = Fig.add_subplot(258, projection='3d')
+Az3 = Fig.add_subplot(259, projection='3d')
+Az4 = Fig.add_subplot(2,5,10, projection='3d')
+
+Ax.plot(D1[30000:],B1[30000:],K1[30000:])
+Az.plot(D11[30000:],B11[30000:],K11[30000:])
+Az1.plot(D112[30000:],B112[30000:],K112[30000:])
+Az2.plot(D113[30000:],B113[30000:],K113[30000:])
+Az3.plot(D114[30000:],B114[30000:],K114[30000:])
+Az4.plot(D115[30000:],B115[30000:],K115[30000:])
+    
 #Решение Уеды
 #Параметры
 a = 420
